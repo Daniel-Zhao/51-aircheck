@@ -1,0 +1,287 @@
+C51 COMPILER V9.01   ¿¼ºË_¿ª·¢_å                                                           09/25/2018 11:22:13 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE ¿¼ºË_¿ª·¢_å
+OBJECT MODULE PLACED IN ¿¼ºË-¿ª·¢°å.OBJ
+COMPILER INVOKED BY: E:\mdk514\keil5\C51\BIN\C51.EXE ¿¼ºË-¿ª·¢°å.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #include <lcd.h>
+   3          #include <ds1302.h>
+   4          #include <xpt2046.h>
+   5          
+   6          #define uchar unsigned char
+   7          #define uint unsigned int
+   8          //¿ÕÆø¼ì²â
+   9          sbit k1=P1^4;    //Ä£Ê½(¼ì²â»òÉèÖÃ)k1
+  10          sbit k2=P1^5;    //¼Ó
+  11          sbit k3=P3^2;    //¼õ
+  12          
+  13          sbit beep=P2^1;
+  14          uchar mode=0;
+  15          uchar temp;
+  16          uchar temph=5;
+  17          uchar flag;
+  18          //Ê±ÖÓÉèÖÃ
+  19          sbit k4=P3^3;
+  20          sbit k5=P3^4;
+  21          sbit k6=P3^5;
+  22          uchar  SetState,SetPlace; 
+  23          uchar TIME[]={0, 0, 0x13, 0x01, 0x09, 0x06, 0x18};
+  24          //ÑÓÊ±º¯Êý(1ºÁÃë)
+  25          void delayms(uchar xms)
+  26          {
+  27   1        uchar i,j;
+  28   1        for(i=xms;i>0;i--)
+  29   1          for(j=110;j>0;j--);
+  30   1      }
+  31          
+  32          //¿ÕÆø¼ì²âÄ£¿é
+  33          void key_pros()//°´¼ü´¦Àíº¯Êý£¨¿ÕÆø¼ì²â£©
+  34          {
+  35   1        if(k1==0)
+  36   1        {
+  37   2          delayms(100);
+  38   2          if(k1==0)
+  39   2          {
+  40   3            mode++;
+  41   3            flag=0;
+  42   3            if(mode==2)
+  43   3            {
+  44   4              mode=0;
+  45   4              flag=1;
+  46   4            }
+  47   3            while(!k1); 
+  48   3          }
+  49   2        }
+  50   1        if(mode==1)//k1°´ÏÂÒ»´Î
+  51   1        {
+  52   2          if(k2==0)
+  53   2          {
+  54   3            delayms(100);
+  55   3            if(k2==0)
+C51 COMPILER V9.01   ¿¼ºË_¿ª·¢_å                                                           09/25/2018 11:22:13 PAGE 2   
+
+  56   3            {
+  57   4              temph+=1;
+  58   4            }
+  59   3            while(!k2); 
+  60   3          }
+  61   2          
+  62   2          if(k3==0)
+  63   2          {
+  64   3            delayms(100);
+  65   3            if(k3==0)
+  66   3            {
+  67   4              temph-=1;
+  68   4              if(temph<=0)
+  69   4              temph=0;
+  70   4            }
+  71   3            while(!k3);
+  72   3          }
+  73   2        }
+  74   1      }
+  75          
+  76          void data_pros()  //Êý¾Ý´¦Àíº¯Êý  ¿ÕÆøÖµ0-500£¬ÈýÎ»Êý
+  77          {
+  78   1        uchar tempbuf[3],temp_buf[3],i;
+  79   1      
+  80   1        tempbuf[0]=temp/100+0x30;   //°ÙÎ»
+  81   1        tempbuf[1]=temp%100/10+0x30;  //Ê®Î»      
+  82   1        tempbuf[2]=temp%100%10+0x30;  //¸öÎ»
+  83   1        
+  84   1        temp_buf[0]=temph/100+0x30;
+  85   1        temp_buf[1]=temph%100/10+0x30;        
+  86   1        temp_buf[2]=temph%100%10+0x30;
+  87   1      
+  88   1        for(i=0;i<3;i++)
+  89   1        {
+  90   2          LcdWriteCom(0x80+i);
+  91   2          LcdWriteData(tempbuf[i]);
+  92   2        }
+  93   1      
+  94   1        for(i=0;i<3;i++)
+  95   1        {
+  96   2          LcdWriteCom(0xc0+i);
+  97   2          LcdWriteData(temp_buf[i]);
+  98   2        }
+  99   1      }
+ 100          
+ 101          void sound()
+ 102          {
+ 103   1        uchar i=100;
+ 104   1        while(i--)
+ 105   1        {
+ 106   2          beep=~beep;
+ 107   2          delayms(10000);
+ 108   2        }
+ 109   1      }
+ 110          
+ 111          void baojinpros() //±¨¾¯´¦Àí
+ 112          {
+ 113   1        if(temp>=temph&&flag==1)
+ 114   1        {
+ 115   2          sound();//·äÃùÆ÷½Ð
+ 116   2        }
+ 117   1        else
+C51 COMPILER V9.01   ¿¼ºË_¿ª·¢_å                                                           09/25/2018 11:22:13 PAGE 3   
+
+ 118   1        { 
+ 119   2          beep=1;//  ·äÃùÆ÷²»½Ð
+ 120   2        }
+ 121   1      }
+ 122          
+ 123          //Ê±ÖÓÏÔÊ¾Ä£¿é
+ 124          
+ 125          void LcdDisplay()
+ 126          {
+ 127   1        LcdWriteCom(0x84);
+ 128   1        LcdWriteData('2');
+ 129   1        LcdWriteData('0');
+ 130   1        LcdWriteData(0x30+TIME[6]/16);      //Äê
+ 131   1        LcdWriteData(0x30+(TIME[6]&0x0f));
+ 132   1        LcdWriteData('-');
+ 133   1        LcdWriteData(0x30+TIME[4]/16);      //ÔÂ
+ 134   1        LcdWriteData(0x30+(TIME[4]&0x0f));
+ 135   1        LcdWriteData('-');
+ 136   1        LcdWriteData(0x30+TIME[3]/16);      //ÈÕ
+ 137   1        LcdWriteData(0x30+(TIME[3]&0x0f));
+ 138   1        LcdWriteData('-');
+ 139   1        LcdWriteData(0x30+(TIME[5]&0x07));  //ÐÇÆÚ
+ 140   1      
+ 141   1        LcdWriteCom(0x88+0X40);
+ 142   1        LcdWriteData(0x30+TIME[2]/16);        //Ê±
+ 143   1        LcdWriteData(0x30+(TIME[2]&0x0f));         
+ 144   1        LcdWriteData('-');
+ 145   1        LcdWriteData(0x30+TIME[1]/16);        //·Ö
+ 146   1        LcdWriteData(0x30+(TIME[1]&0x0f));  
+ 147   1        LcdWriteData('-');
+ 148   1        LcdWriteData(0x30+TIME[0]/16);        //Ãë
+ 149   1        LcdWriteData(0x30+(TIME[0]&0x0f));  
+ 150   1      }
+ 151          
+ 152          void Int0Configuration()// ÅäÖÃÍâ²¿ÖÐ¶Ï0,ÎÞÊäÈëÎÞÊä³ö
+ 153          {
+ 154   1        //ÉèÖÃINT0
+ 155   1        IT0=1;//Ìø±äÑØ³ö·¢·½Ê½£¨ÏÂ½µÑØ£©
+ 156   1        EX0=1;//´ò¿ªINT0µÄÖÐ¶ÏÔÊÐí¡£
+ 157   1        EA=1;//´ò¿ª×ÜÖÐ¶Ï 
+ 158   1      }
+ 159          
+ 160          void Int0() interrupt 0 //Íâ²¿ÖÐ¶Ï0 ÖÐ¶Ïº¯Êý,ÎÞÊäÈëÎÞÊä³ö  
+ 161          {
+ 162   1        delayms(10);
+ 163   1        if(k4==0)//Èç¹ûÒª°´ÏÂk4½øÈëÊ±ÖÓÉèÖÃ£¬ÄÇÃ´½«setstate·­×ª£¬setplaceÖÃÁã£¨±ãÓÚÑ¡Ôñ¸Ä±äÊ²Ã´£©
+ 164   1        {
+ 165   2          delayms(100);
+ 166   2          if(k4==0)
+ 167   2          {
+ 168   3            SetState=~SetState;
+ 169   3            SetPlace=0;
+ 170   3            Ds1302Init();     
+ 171   3          } 
+ 172   2        }
+ 173   1      }
+ 174          
+ 175          
+ 176          void main()
+ 177          {
+ 178   1        uchar i;
+ 179   1        beep=1;
+C51 COMPILER V9.01   ¿¼ºË_¿ª·¢_å                                                           09/25/2018 11:22:13 PAGE 4   
+
+ 180   1        Int0Configuration();
+ 181   1        LcdInit();  //lcd³õÊ¼»¯
+ 182   1        Ds1302Init(); //Ê±ÖÓÐ¾Æ¬³õÊ¼»¯
+ 183   1        while(1)
+ 184   1        {   
+ 185   2          if(SetState==0)
+ 186   2          {
+ 187   3            Ds1302ReadTime();
+ 188   3          }
+ 189   2          else
+ 190   2          {
+ 191   3            if(k5==0)   //¼ì²â°´¼üK5ÊÇ·ñ°´ÏÂ
+ 192   3            {
+ 193   4              delayms(100); //Ïû³ý¶¶¶¯
+ 194   4              if(k5==0)
+ 195   4              {
+ 196   5                SetPlace++;
+ 197   5                if(SetPlace>=7)  //Æß¸öÊ±¼ä
+ 198   5                  SetPlace=0;         
+ 199   5              }
+ 200   4      
+ 201   4              while((i<50)&&(k5==0))   //¼ì²â°´¼üÊÇ·ñËÉ¿ª
+ 202   4              {
+ 203   5                delayms(10);
+ 204   5                i++;
+ 205   5              }
+ 206   4              i=0;
+ 207   4            }
+ 208   3            if(k6==0)   //¼ì²â°´¼üK6ÊÇ·ñ°´ÏÂ
+ 209   3            {
+ 210   4              delayms(10);  //Ïû³ý¶¶¶¯
+ 211   4              if(k6==0)
+ 212   4              {
+ 213   5                TIME[SetPlace]++;
+ 214   5                if((TIME[SetPlace]&0x0f)>9)          //»»³ÉBCDÂë¡£
+ 215   5                {
+ 216   6                  TIME[SetPlace]=TIME[SetPlace]+6;
+ 217   6                }
+ 218   5                if((TIME[SetPlace]>=0x60)&&(SetPlace<2))    //·ÖÃëÖ»ÄÜµ½59
+ 219   5                {
+ 220   6                  TIME[SetPlace]=0;
+ 221   6                }
+ 222   5                if((TIME[SetPlace]>=0x24)&&(SetPlace==2))   //Ð¡Ê±Ö»ÄÜµ½23
+ 223   5                {
+ 224   6                  TIME[SetPlace]=0;
+ 225   6                }
+ 226   5                if((TIME[SetPlace]>=0x32)&&(SetPlace==3))   //ÈÕÖ»ÄÜµ½31
+ 227   5                {
+ 228   6                  TIME[SetPlace]=0; 
+ 229   6                }
+ 230   5                if((TIME[SetPlace]>=0x13)&&(SetPlace==4))   //ÔÂÖ»ÄÜµ½12
+ 231   5                {
+ 232   6                  TIME[SetPlace]=0;
+ 233   6                } 
+ 234   5                if((TIME[SetPlace]>=0x8)&&(SetPlace==5))    //ÖÜÖ»ÄÜµ½7
+ 235   5                {
+ 236   6                  TIME[SetPlace]=1;
+ 237   6                }     
+ 238   5              }
+ 239   4              
+ 240   4              while((i<50)&&(k6==0))   //¼ì²â°´¼üÊÇ·ñËÉ¿ª
+ 241   4              {
+C51 COMPILER V9.01   ¿¼ºË_¿ª·¢_å                                                           09/25/2018 11:22:13 PAGE 5   
+
+ 242   5                delayms(10);
+ 243   5                i++;
+ 244   5              }
+ 245   4              i=0;
+ 246   4              
+ 247   4            }           
+ 248   3          }
+ 249   2          LcdDisplay();//Ê±¼äÏÔÊ¾
+ 250   2          key_pros();//°´¼ü´¦Àíº¯Êý
+ 251   2          data_pros();//Êý¾Ý´¦Àíº¯Êý
+ 252   2          baojinpros(); //±¨¾¯´¦Àí£¨·äÃùÆ÷¶¯Ì¬£©
+ 253   2          temp = Read_AD_Data(0xE4);  //¶ÁÈ¡Õâ¸öÍ¨µÀµÄÖµ A2A1A0=  ¸ù¾ÝÊý¾ÝÊÖ²á X+Í¨µÀ   
+ 254   2        }
+ 255   1        
+ 256   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    773    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     13       8
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
